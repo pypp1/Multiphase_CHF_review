@@ -37,7 +37,7 @@ Q_PEAK_MW  = 1.65   # MW/m²  peak heat flux (150 % nominal)
 N_STEPS    = 30     # number of quasi-static steps
 
 # ── Models to run ─────────────────────────────────────────────────────────────
-RUN_BIASI      = False   # Biasi P range: 1.7–140 ata → valid, but disable for speed
+RUN_BIASI      = False   #quality
 RUN_KATTO      = True
-RUN_HEWITT     = False
+RUN_HEWITT     = True
 RUN_GROENEVELD = True
