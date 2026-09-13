@@ -24,7 +24,7 @@ Steady-state cases (e.g. case_1a, case_2a):
 All cases:
   - parity_<A>_vs_<B>.png         Matched-condition scatter of model A vs B
                                    predicted CHF (same G, P, x_in), colored
-                                   by case, with a 45° agreement line.
+                                   by case, with a 45deg agreement line.
                                    One file per model pair with >=2 shared points.
 """
 
@@ -84,9 +84,9 @@ def _eval_model(name, G, D_M, L_M, P_PA, X_IN, props):
     raise ValueError(name)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 # Pressurisation case plots
-# ─────────────────────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 
 def plot_pressurisation(case, parity_store):
     models = _active_models(case)
@@ -135,7 +135,7 @@ def plot_pressurisation(case, parity_store):
         ax.plot(t_arr, q_chf[m] / 1e6, label=f"q_CHF ({m})", color=COLORS.get(m))
     ax.plot(t_arr, q_arr / 1e6, label="applied q''", color="black", linestyle="--")
     ax.set_xlabel("Transient parameter t [-]")
-    ax.set_ylabel("Heat flux [MW/m²]")
+    ax.set_ylabel("Heat flux [MW/m^2]")
     ax.set_title(f"{case.NAME}\nPredicted CHF vs applied heat flux")
     ax.legend()
     ax.grid(alpha=0.3)
@@ -148,7 +148,7 @@ def plot_pressurisation(case, parity_store):
     for m in models:
         ax.plot(P_arr / 1e6, q_chf[m] / 1e6, label=m, color=COLORS.get(m), marker="o", ms=3)
     ax.set_xlabel("Pressure [MPa]")
-    ax.set_ylabel("Predicted CHF [MW/m²]")
+    ax.set_ylabel("Predicted CHF [MW/m^2]")
     ax.set_title(f"{case.NAME}\nPredicted CHF vs pressure")
     ax.legend()
     ax.grid(alpha=0.3)
@@ -157,9 +157,9 @@ def plot_pressurisation(case, parity_store):
     plt.close(fig)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 # LOFA case plots
-# ─────────────────────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 
 def plot_lofa(case, parity_store):
     models = _active_models(case)
@@ -186,7 +186,7 @@ def plot_lofa(case, parity_store):
     for m in models:
         ax.plot(G_arr, margin[m], label=m, color=COLORS.get(m), marker="o", ms=3)
     ax.axhline(1.0, color="k", linestyle="--", linewidth=1, label="margin = 1 (dryout)")
-    ax.set_xlabel("Mass flux G [kg/(m²·s)]")
+    ax.set_xlabel("Mass flux G [kg/(m^2*s)]")
     ax.set_ylabel("CHF margin [-]")
     ax.set_title(f"{case.NAME}\nCHF margin vs mass flux (LOFA)")
     ax.invert_xaxis()
@@ -197,9 +197,9 @@ def plot_lofa(case, parity_store):
     plt.close(fig)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 # Steady-state cases: bar chart comparison
-# ─────────────────────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 
 def plot_steady_comparison(steady_cases, parity_store):
     if not steady_cases:
@@ -247,9 +247,9 @@ def plot_steady_comparison(steady_cases, parity_store):
     plt.close(fig)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 # Cross-model parity plots (matched conditions, all cases combined)
-# ─────────────────────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 
 def plot_model_parity(parity_store):
     if not parity_store:
@@ -287,10 +287,10 @@ def plot_model_parity(parity_store):
         ax.set_xlim(lims)
         ax.set_ylim(lims)
         ax.set_aspect("equal")
-        ax.set_xlabel(f"{model_a} predicted CHF [MW/m²]")
-        ax.set_ylabel(f"{model_b} predicted CHF [MW/m²]")
+        ax.set_xlabel(f"{model_a} predicted CHF [MW/m^2]")
+        ax.set_ylabel(f"{model_b} predicted CHF [MW/m^2]")
         ax.set_title(f"Matched-condition parity: {model_a} vs {model_b}\n"
-                      f"(same G, P, x_in — points above the line: {model_b} more conservative)")
+                      f"(same G, P, x_in -- points above the line: {model_b} more conservative)")
         ax.legend(fontsize=8)
         ax.grid(alpha=0.3)
         fig.tight_layout()
@@ -302,7 +302,7 @@ def _case_stem(case):
     path = getattr(case, "__file__", None)
     if path:
         return Path(path).stem
-    return case.NAME.split("—")[0].strip().lower().replace(" ", "_")
+    return case.NAME.split("--")[0].strip().lower().replace(" ", "_")
 
 
 def main():

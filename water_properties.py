@@ -4,22 +4,22 @@ water_properties.py
 Saturated water/steam thermophysical properties by piecewise linear
 interpolation on IAPWS-IF97 table data.
 
-Valid range: 4 – 10 MPa.
+Valid range: 4 - 10 MPa.
 
 Units
 -----
 P       Pa
 T_sat   K
-rho_l   kg/m³
-rho_v   kg/m³
+rho_l   kg/m^3
+rho_v   kg/m^3
 H_fg    J/kg
 sigma   N/m
-cp_l    J/(kg·K)
-eta_l   Pa·s
-eta_v   Pa·s
+cp_l    J/(kg*K)
+eta_l   Pa*s
+eta_v   Pa*s
 
 Reference anchor points (IAPWS-IF97):
-  P[MPa]  T_sat[°C]  rho_l   rho_v   H_fg[kJ/kg]  sigma[mN/m]  cp_l[kJ/kgK]  eta_l[µPa·s]  eta_v[µPa·s]
+  P[MPa]  T_sat[degC]  rho_l   rho_v   H_fg[kJ/kg]  sigma[mN/m]  cp_l[kJ/kgK]  eta_l[uPa*s]  eta_v[uPa*s]
   4.0      250.4      799.2   20.09   1714.0        26.00        4.864          109.0          15.6
   5.0      263.9      777.0   25.77   1639.7        22.91        4.987          101.0          16.3
   6.0      275.6      756.1   31.89   1570.5        20.00        5.147           95.0          17.0
@@ -40,13 +40,13 @@ class SatProps:
     """Saturated water/steam properties at a given pressure."""
     P:      float   # Pa
     T_sat:  float   # K
-    rho_l:  float   # kg/m³
-    rho_v:  float   # kg/m³
+    rho_l:  float   # kg/m^3
+    rho_v:  float   # kg/m^3
     H_fg:   float   # J/kg
     sigma:  float   # N/m
-    cp_l:   float   # J/(kg·K)
-    eta_l:  float   # Pa·s
-    eta_v:  float   # Pa·s
+    cp_l:   float   # J/(kg*K)
+    eta_l:  float   # Pa*s
+    eta_v:  float   # Pa*s
 
 
 # Table: [P_MPa, T_sat_C, rho_l, rho_v, H_fg_Jkg, sigma_Nm, cp_l_JkgK, eta_l_Pas, eta_v_Pas]
@@ -68,7 +68,7 @@ def sat_props(P_Pa: float) -> SatProps:
     Return saturated water/steam properties at pressure P_Pa [Pa].
 
     Interpolation is piecewise linear on the IAPWS-IF97 anchor table.
-    Valid range: 4 MPa ≤ P ≤ 10 MPa.  Values outside this range are
+    Valid range: 4 MPa <= P <= 10 MPa.  Values outside this range are
     extrapolated (numpy.interp flat-extrapolation at the boundary).
 
     Parameters

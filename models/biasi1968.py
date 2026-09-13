@@ -9,39 +9,39 @@ Reference
 Biasi, L., Clerici, G. C., Tozzi, A., Sala, R. (1968).
 "Extension of A.R.S. correlation to burnout prediction with
 non-uniform heating."
-Journal of Nuclear Energy, 22, 705–716.
+Journal of Nuclear Energy, 22, 705-716.
 
 Physical model
 --------------
 CHF is taken as the maximum of two straight lines in the (q, X_0) plane:
 
   Low-quality branch:
-      q_0 = 1.883e3 * y(P) / [D^α * G^(1/6)] * [y(P)/G^(1/6) - X_0]
+      q_0 = 1.883e3 * y(P) / [D^alpha * G^(1/6)] * [y(P)/G^(1/6) - X_0]
 
   High-quality branch:
-      q_0 = 3.78e3 * h(P) / [D^α * G^(0.6)] * [1 - X_0]
+      q_0 = 3.78e3 * h(P) / [D^alpha * G^(0.6)] * [1 - X_0]
 
 where
-  y(P) = 0.7249 + 0.099·P·exp(-0.032·P)
-  h(P) = −1.159 + 0.149·P·exp(-0.019·P) + 8.99·P/(10 + P²)
-  α    = 0.4 for D ≥ 1 cm,  0.6 for D < 1 cm
-  P    in ata,  D in cm,  G in g/(cm²·s),  q in W/cm²
+  y(P) = 0.7249 + 0.099*P*exp(-0.032*P)
+  h(P) = -1.159 + 0.149*P*exp(-0.019*P) + 8.99*P/(10 + P^2)
+  alpha    = 0.4 for D >= 1 cm,  0.6 for D < 1 cm
+  P    in ata,  D in cm,  G in g/(cm^2*s),  q in W/cm^2
 
 The intersection with the heat-balance line
-  q_t(X) = G·D·H_fg·(X - X_in) / (4·L)
+  q_t(X) = G*D*H_fg*(X - X_in) / (4*L)
 gives the CHF point.
 
 Validity range (uniform heating)
 ---------------------------------
-  0.3 cm ≤ D ≤ 3.75 cm
-  20 cm  ≤ L ≤ 600 cm
-  1.7 ata ≤ P ≤ 140 ata
-  10 g/(cm²·s) ≤ G ≤ 600 g/(cm²·s)
+  0.3 cm <= D <= 3.75 cm
+  20 cm  <= L <= 600 cm
+  1.7 ata <= P <= 140 ata
+  10 g/(cm^2*s) <= G <= 600 g/(cm^2*s)
   X_in < 0  (subcooled inlet)
 
 Units
 -----
-All inputs and outputs are in SI (Pa, kg/m²/s, m, J/kg, W/m²).
+All inputs and outputs are in SI (Pa, kg/m^2/s, m, J/kg, W/m^2).
 Internal conversions to CGS are performed inside the function.
 """
 
@@ -54,8 +54,8 @@ from typing import Optional
 @dataclass
 class BiasiResult:
     """Output of the Biasi CHF calculation."""
-    q_chf:    float               # W/m²   — critical heat flux
-    x_chf:    float               # —       — quality at CHF point
+    q_chf:    float               # W/m^2   -- critical heat flux
+    x_chf:    float               # --       -- quality at CHF point
     branch:   str                 # 'low_x' | 'high_x' | 'both'
     warnings: list = field(default_factory=list)
 
@@ -85,7 +85,7 @@ def biasi_chf(
     Parameters
     ----------
     G : float
-        Mass flux [kg/(m²·s)].
+        Mass flux [kg/(m^2*s)].
     d : float
         Tube inner diameter [m].
     L : float
@@ -103,23 +103,23 @@ def biasi_chf(
     """
     warnings = []
 
-    # ── Unit conversions: SI → CGS ────────────────────────────────────────────
-    P_ata = P_Pa / (9.81e4)          # 1 ata ≈ 98 100 Pa
-    G_cgs = G * 1e-4 / 1e-3         # kg/(m²·s) → g/(cm²·s) = 0.1·G_SI
-    # Actually: 1 kg/(m²·s) = 1e-4 kg/(cm²·s) = 0.1 g/(cm²·s)
-    G_cgs = G * 0.1                  # g/(cm²·s)
-    d_cm  = d * 100.0                # m → cm
-    L_cm  = L * 100.0                # m → cm
-    H_fg_cgs = H_fg * 1e-3          # J/kg → kJ/kg   (Biasi uses kJ/kg… not needed directly)
+    # -- Unit conversions: SI -> CGS --------------------------------------------
+    P_ata = P_Pa / (9.81e4)          # 1 ata ~ 98 100 Pa
+    G_cgs = G * 1e-4 / 1e-3         # kg/(m^2*s) -> g/(cm^2*s) = 0.1*G_SI
+    # Actually: 1 kg/(m^2*s) = 1e-4 kg/(cm^2*s) = 0.1 g/(cm^2*s)
+    G_cgs = G * 0.1                  # g/(cm^2*s)
+    d_cm  = d * 100.0                # m -> cm
+    L_cm  = L * 100.0                # m -> cm
+    H_fg_cgs = H_fg * 1e-3          # J/kg -> kJ/kg   (Biasi uses kJ/kg... not needed directly)
     H_fg_Jg  = H_fg / 1000.0        # J/g (for CGS heat balance)
 
-    # ── Biasi pressure functions ──────────────────────────────────────────────
+    # -- Biasi pressure functions ----------------------------------------------
     y, h = _pressure_functions(P_ata)
 
-    # ── α coefficient ─────────────────────────────────────────────────────────
+    # -- alpha coefficient ---------------------------------------------------------
     alpha = 0.4 if d_cm >= 1.0 else 0.6
 
-    # ── Validity checks ───────────────────────────────────────────────────────
+    # -- Validity checks -------------------------------------------------------
     if not (0.3 <= d_cm <= 3.75):
         warnings.append(f"D = {d_cm:.2f} cm outside validity range [0.3, 3.75] cm.")
     if not (20 <= L_cm <= 600):
@@ -127,11 +127,11 @@ def biasi_chf(
     if not (1.7 <= P_ata <= 140):
         warnings.append(f"P = {P_ata:.1f} ata outside validity range [1.7, 140] ata.")
     if not (10 <= G_cgs <= 600):
-        warnings.append(f"G = {G_cgs:.1f} g/(cm²·s) outside validity range [10, 600].")
+        warnings.append(f"G = {G_cgs:.1f} g/(cm^2*s) outside validity range [10, 600].")
     if x_in >= 0:
-        warnings.append("x_in ≥ 0: correlation is derived for subcooled inlet only.")
+        warnings.append("x_in >= 0: correlation is derived for subcooled inlet only.")
 
-    # ── Biasi branch functions [W/cm²] ───────────────────────────────────────
+    # -- Biasi branch functions [W/cm^2] ---------------------------------------
     def q_low(x):
         return 1.883e3 / (d_cm**alpha * G_cgs**(1.0/6.0)) * (y / G_cgs**(1.0/6.0) - x)
 
@@ -142,12 +142,12 @@ def biasi_chf(
         """Envelope: maximum of the two branches."""
         return np.maximum(q_low(x), q_high(x))
 
-    # ── Heat-balance line [W/cm²] ─────────────────────────────────────────────
+    # -- Heat-balance line [W/cm^2] ---------------------------------------------
     # q_t(x) = G_cgs * d_cm * H_fg_Jg * (x - x_in) / (4 * L_cm)
     def q_t(x):
         return G_cgs * d_cm * H_fg_Jg * (x - x_in) / (4.0 * L_cm)
 
-    # ── Find intersection ─────────────────────────────────────────────────────
+    # -- Find intersection -----------------------------------------------------
     def residual(x):
         return q_biasi(x) - q_t(x)
 
@@ -173,7 +173,7 @@ def biasi_chf(
         x_chf = float("nan")
 
     q_chf_Wcm2 = q_t(x_chf)
-    q_chf_SI   = q_chf_Wcm2 * 1e4   # W/cm² → W/m²
+    q_chf_SI   = q_chf_Wcm2 * 1e4   # W/cm^2 -> W/m^2
 
     # Identify dominant branch at x_chf
     ql = q_low(x_chf)

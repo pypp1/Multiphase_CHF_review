@@ -8,29 +8,29 @@ Reference
 ---------
 Hewitt, G. F. and Govan, A. H. (1990).
 "Phenomenological modelling of non-equilibrium flows with phase change."
-Int. J. Heat Mass Transfer, 33(2), 229–242.
+Int. J. Heat Mass Transfer, 33(2), 229-242.
 
 Physical model
 --------------
 In annular flow the liquid phase travels partly as a wall film and partly
 as entrained droplets in the vapour core.  Dryout (CHF) is predicted when
-the liquid film flow rate m_LF → 0.
+the liquid film flow rate m_LF -> 0.
 
 The film flow rate evolves along the tube as:
-    dm_LF/dz = (4/d) · (D − E − q/H_fg)           (eq. 7)
+    dm_LF/dz = (4/d) * (D - E - q/H_fg)           (eq. 7)
 
 with deposition and entrainment rates given by the Hewitt-Govan
-correlations (eqs. 3–6):
+correlations (eqs. 3-6):
 
   Deposition:
-    k √(ρG·d/σ) = 0.18               if C/ρG < 0.3
-    k √(ρG·d/σ) = 0.083·(C/ρG)^-0.65 if C/ρG ≥ 0.3
+    k sqrt(rho_G*d/sigma) = 0.18               if C/rho_G < 0.3
+    k sqrt(rho_G*d/sigma) = 0.083*(C/rho_G)^-0.65 if C/rho_G >= 0.3
 
   Entrainment onset (critical film flow rate, eq. 6):
-    Re_LFC = exp(5.8504 + 0.4249·(ηG/ηL)·√(ρL/ρG))
+    Re_LFC = exp(5.8504 + 0.4249*(eta_G/eta_L)*sqrt(rho_L/rho_G))
 
   Entrainment rate (eq. 5):
-    E/m_G = 5.75×10⁻⁵·[(m_LF − m_LFC)²·d·ρL/(σ·ρG²)]^0.316
+    E/m_G = 5.75x10^-5*[(m_LF - m_LFC)^2*d*rho_L/(sigma*rho_G^2)]^0.316
             if m_LF > m_LFC, else 0
 
 CHF is the heat flux at which m_LF(L) = 0 (found by bisection).
@@ -39,11 +39,11 @@ Boundary condition (onset of annular flow)
 ------------------------------------------
 Annular flow is assumed to begin at x = x_onset (default 0.01).
 At that point 99 % of liquid is entrained, so:
-    m_LF_0 = 0.01 · G · (1 − x_onset)         (conservative)
+    m_LF_0 = 0.01 * G * (1 - x_onset)         (conservative)
 
 Units
 -----
-All inputs and outputs are SI (Pa, kg/m²/s, m, J/kg, W/m²).
+All inputs and outputs are SI (Pa, kg/m^2/s, m, J/kg, W/m^2).
 """
 
 import numpy as np
@@ -55,14 +55,14 @@ from dataclasses import dataclass, field
 @dataclass
 class HewittResult:
     """Output of the Hewitt & Govan dryout calculation."""
-    q_chf:    float               # W/m²   — critical heat flux
-    z_dryout: float               # m      — axial dryout location (≈ L at CHF)
+    q_chf:    float               # W/m^2   -- critical heat flux
+    z_dryout: float               # m      -- axial dryout location (~ L at CHF)
     warnings: list = field(default_factory=list)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 # Internal helpers
-# ─────────────────────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 
 def _re_lfc(eta_l: float, eta_v: float, rho_l: float, rho_v: float) -> float:
     """Critical film Reynolds number for onset of entrainment (eq. 6)."""
@@ -70,7 +70,7 @@ def _re_lfc(eta_l: float, eta_v: float, rho_l: float, rho_v: float) -> float:
 
 
 def _deposition_rate(C: float, rho_v: float, sigma: float, d: float) -> float:
-    """Deposition mass flux D [kg/(m²·s)] from Hewitt-Govan (eqs. 3–4)."""
+    """Deposition mass flux D [kg/(m^2*s)] from Hewitt-Govan (eqs. 3-4)."""
     C_ratio = C / rho_v
     factor  = np.sqrt(sigma / (rho_v * d))
     if C_ratio < 0.3:
@@ -82,16 +82,16 @@ def _deposition_rate(C: float, rho_v: float, sigma: float, d: float) -> float:
 
 def _entrainment_rate(m_LF: float, m_LFC: float, m_G: float,
                       d: float, rho_l: float, rho_v: float, sigma: float) -> float:
-    """Entrainment mass flux E [kg/(m²·s)] from Hewitt-Govan (eq. 5)."""
+    """Entrainment mass flux E [kg/(m^2*s)] from Hewitt-Govan (eq. 5)."""
     if m_LF <= m_LFC:
         return 0.0
     term = (m_LF - m_LFC)**2 * d * rho_l / (sigma * rho_v**2)
     return m_G * 5.75e-5 * (term**0.316)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 # Public API
-# ─────────────────────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 
 def hewitt_chf(
     G:       float,
@@ -117,31 +117,31 @@ def hewitt_chf(
     Parameters
     ----------
     G : float
-        Mass flux [kg/(m²·s)].
+        Mass flux [kg/(m^2*s)].
     d : float
         Tube inner diameter [m].
     L : float
         Heated length [m].
     rho_l : float
-        Saturated liquid density [kg/m³].
+        Saturated liquid density [kg/m^3].
     rho_v : float
-        Saturated vapour density [kg/m³].
+        Saturated vapour density [kg/m^3].
     H_fg : float
         Latent heat of vaporisation [J/kg].
     sigma : float
         Surface tension [N/m].
     eta_l : float
-        Dynamic viscosity of liquid [Pa·s].
+        Dynamic viscosity of liquid [Pa*s].
     eta_v : float
-        Dynamic viscosity of vapour [Pa·s].
+        Dynamic viscosity of vapour [Pa*s].
     x_in : float, optional
-        Inlet thermodynamic quality.  Default −0.05 (subcooled).
+        Inlet thermodynamic quality.  Default -0.05 (subcooled).
     x_onset : float, optional
         Quality at which annular flow is assumed to start.  Default 0.01.
     q_lo : float, optional
-        Lower bracket for CHF search [W/m²].  Default 100 kW/m².
+        Lower bracket for CHF search [W/m^2].  Default 100 kW/m^2.
     q_hi : float, optional
-        Upper bracket for CHF search [W/m²].  Default 10 MW/m².
+        Upper bracket for CHF search [W/m^2].  Default 10 MW/m^2.
 
     Returns
     -------
@@ -150,18 +150,18 @@ def hewitt_chf(
     warnings = []
 
     Re_LFC = _re_lfc(eta_l, eta_v, rho_l, rho_v)
-    m_LFC  = Re_LFC * eta_l / d       # critical film mass flux [kg/(m²·s)]
+    m_LFC  = Re_LFC * eta_l / d       # critical film mass flux [kg/(m^2*s)]
 
     def _film_flow_at_outlet(q_flux: float) -> float:
         """
         Integrate the film ODE from the onset of annular flow to L.
-        Returns m_LF at z = L (positive = film survives, ≤ 0 = dryout).
+        Returns m_LF at z = L (positive = film survives, <= 0 = dryout).
         """
         # Axial position where annular flow starts
         z_onset = (x_onset - x_in) * G * d * H_fg / (4.0 * q_flux)
 
         if z_onset >= L:
-            # The tube never reaches annular flow — no dryout
+            # The tube never reaches annular flow -- no dryout
             return 1.0
 
         # Boundary condition: 99 % of liquid entrained at x_onset
@@ -206,25 +206,25 @@ def hewitt_chf(
         )
 
         if sol.status == 1:
-            # Dryout event triggered — film reached zero before L
+            # Dryout event triggered -- film reached zero before L
             z_dry = sol.t_events[0][0]
             return z_dry - L   # negative: dryout is upstream of exit
         else:
             return sol.y[0, -1]   # positive: film survives to L
 
-    # ── Bisection to find CHF ─────────────────────────────────────────────────
+    # -- Bisection to find CHF -------------------------------------------------
     f_lo = _film_flow_at_outlet(q_lo)
     f_hi = _film_flow_at_outlet(q_hi)
 
     if f_lo * f_hi > 0:
         if f_lo > 0:
             warnings.append(
-                f"Film survives at q_hi = {q_hi/1e6:.2f} MW/m²: "
+                f"Film survives at q_hi = {q_hi/1e6:.2f} MW/m^2: "
                 "CHF is above the search bracket. Try increasing q_hi."
             )
         else:
             warnings.append(
-                f"Dryout already at q_lo = {q_lo/1e3:.0f} kW/m²: "
+                f"Dryout already at q_lo = {q_lo/1e3:.0f} kW/m^2: "
                 "CHF is below the search bracket. Try decreasing q_lo."
             )
         return HewittResult(q_chf=float('nan'), z_dryout=float('nan'),
