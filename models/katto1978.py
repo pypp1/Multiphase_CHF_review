@@ -9,20 +9,20 @@ Reference
 Katto, Y. (1978).
 "A generalized correlation of critical heat flux for the forced
 convection boiling in vertical uniformly heated round tubes."
-Int. J. Heat Mass Transfer, 21, 1527–1542.
+Int. J. Heat Mass Transfer, 21, 1527-1542.
 
 Physical model
 --------------
 Four CHF regimes are identified (L, H, N, HP) based on the
-dimensionless groups  ρv/ρl,  σρl/(G²l),  and  l/d.
+dimensionless groups  rho_v/rho_l,  sigma*rho_l/(G^2l),  and  l/d.
 
-Regime boundaries (eqs. 16–19 of Katto 1978) select the correlation.
-Subcooling effect is accounted for via a K factor (eqs. 21–23):
-    q_c = q_c0 · (1 + K · ΔH_i / H_fg)
+Regime boundaries (eqs. 16-19 of Katto 1978) select the correlation.
+Subcooling effect is accounted for via a K factor (eqs. 21-23):
+    q_c = q_c0 * (1 + K * dH_i / H_fg)
 
 Units
 -----
-All inputs and outputs are SI (Pa, kg/m²/s, m, J/kg, W/m²).
+All inputs and outputs are SI (Pa, kg/m^2/s, m, J/kg, W/m^2).
 """
 
 import numpy as np
@@ -33,23 +33,23 @@ from dataclasses import dataclass, field
 class KattoResult:
     """Output of the Katto CHF calculation."""
     regime: str                       # 'L' | 'H' | 'N' | 'HP'
-    q_c0:   float                     # W/m² — saturated CHF
-    q_c:    float                     # W/m² — CHF with subcooling correction
+    q_c0:   float                     # W/m^2 -- saturated CHF
+    q_c:    float                     # W/m^2 -- CHF with subcooling correction
     K:      float                     # subcooling factor (nan for N-regime)
     x_ex:   float                     # exit quality from heat balance
     warnings: list = field(default_factory=list)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 # Internal helpers
-# ─────────────────────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 
 def _dim_groups(G: float, d: float, l: float,
                 rho_l: float, rho_v: float, sigma: float):
     """Compute the three key dimensionless groups."""
     rho_ratio = rho_v / rho_l
     l_over_d  = l / d
-    We_inv    = sigma * rho_l / (G**2 * l)   # inverse Weber-like group σρl/(G²l)
+    We_inv    = sigma * rho_l / (G**2 * l)   # inverse Weber-like group sigma*rho_l/(G^2l)
     return rho_ratio, l_over_d, We_inv
 
 
@@ -57,7 +57,7 @@ def _detect_regime(rho_ratio: float, l_over_d: float, We_inv: float,
                    fluid: str = 'water') -> str:
     """
     Select the CHF regime according to the boundary equations of
-    Katto (1978), eqs. (16)–(19).
+    Katto (1978), eqs. (16)-(19).
     """
     C_LH = 0.29 if fluid.lower() == 'freon' else 0.40
 
@@ -84,7 +84,7 @@ def _detect_regime(rho_ratio: float, l_over_d: float, We_inv: float,
 def _qc0(regime: str, G: float, H_fg: float,
          rho_ratio: float, l_over_d: float, We_inv: float,
          fluid: str = 'water') -> float:
-    """Saturated CHF q_c0 [W/m²] for the identified regime."""
+    """Saturated CHF q_c0 [W/m^2] for the identified regime."""
     if regime == 'L':
         C = 0.34 if fluid.lower() == 'freon' else 0.25
         return C * G * H_fg * (We_inv**0.043) / l_over_d
@@ -103,7 +103,7 @@ def _qc0(regime: str, G: float, H_fg: float,
 def _K_factor(regime: str, l_over_d: float,
               rho_ratio: float, We_inv: float) -> float:
     """
-    Subcooling K factor from Katto (1978) eqs. (21)–(23).
+    Subcooling K factor from Katto (1978) eqs. (21)-(23).
     Returns NaN for N-regime (no correlation available).
     """
     if regime == 'L':
@@ -120,13 +120,13 @@ def _K_factor(regime: str, l_over_d: float,
             return 0.664 * rho_ratio**-0.6
         return 3.08 * (We_inv**0.09) * rho_ratio**-0.6
 
-    # N-regime: no correlation for K in Katto 1978 §6.4
+    # N-regime: no correlation for K in Katto 1978 Section 6.4
     return float('nan')
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 # Public API
-# ─────────────────────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 
 def katto_chf(
     G:      float,
@@ -145,15 +145,15 @@ def katto_chf(
     Parameters
     ----------
     G : float
-        Mass flux [kg/(m²·s)].
+        Mass flux [kg/(m^2*s)].
     d : float
         Tube inner diameter [m].
     l : float
         Heated length [m].
     rho_l : float
-        Saturated liquid density [kg/m³].
+        Saturated liquid density [kg/m^3].
     rho_v : float
-        Saturated vapour density [kg/m³].
+        Saturated vapour density [kg/m^3].
     H_fg : float
         Latent heat of vaporisation [J/kg].
     sigma : float
@@ -177,7 +177,7 @@ def katto_chf(
     if u_in < 0.3 and l_over_d < 50:
         warnings.append(
             "Possible VL-regime (u_in < 0.3 m/s, l/d < 50): pool-boiling "
-            "may dominate — Katto 1978 §4.1 supplement."
+            "may dominate -- Katto 1978 Section 4.1 supplement."
         )
 
     qc0 = _qc0(regime, G, H_fg, rho_ratio, l_over_d, We_inv, fluid)
@@ -185,7 +185,7 @@ def katto_chf(
 
     if regime == 'N':
         warnings.append(
-            "N-regime: subcooling K factor is unavailable (Katto 1978 §6.4). "
+            "N-regime: subcooling K factor is unavailable (Katto 1978 Section 6.4). "
             "q_c returned equals q_c0 (conservative, no subcooling credit)."
         )
         q_c = qc0
