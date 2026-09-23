@@ -28,7 +28,7 @@ L_M = 3.8        # m  --  heated length
 P_PA   = 7.0e6   # Pa  --  system pressure
 G_KGM2S = 1500.0 # kg/(m^2*s)  --  mass flux
 X_IN   = -0.041  # --          --  inlet thermodynamic quality (subcooled)
-Q_NOM_MW = 1.1   # MW/m^2      --  nominal heat flux (for margin calculation)
+Q_NOM_MW = 0.7   # MW/m^2      --  nominal heat flux (for margin calculation)
 
 # -- Models to run  (set each to True/False independently) --------------------
 RUN_BIASI      = True

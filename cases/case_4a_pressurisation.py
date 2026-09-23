@@ -32,8 +32,8 @@ X_IN     = -0.041
 # -- Pressurisation sweep parameters ------------------------------------------
 P_NOM_PA   = 7.0e6  # Pa  initial pressure
 P_PEAK_PA  = 8.5e6  # Pa  peak pressure
-Q_NOM_MW   = 1.1    # MW/m^2  nominal heat flux
-Q_PEAK_MW  = 1.65   # MW/m^2  peak heat flux (150 % nominal)
+Q_NOM_MW   = 0.7    # MW/m^2  nominal heat flux
+Q_PEAK_MW  = 1.1   # MW/m^2  peak heat flux (150 % nominal)
 N_STEPS    = 30     # number of quasi-static steps
 
 # -- Models to run -------------------------------------------------------------

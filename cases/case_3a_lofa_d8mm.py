@@ -28,7 +28,7 @@ L_M = 3.8        # m
 # -- Operating conditions (constant during transient) -------------------------
 P_PA     = 7.0e6 # Pa
 X_IN     = -0.041
-Q_NOM_MW = 1.1   # MW/m^2  (held constant)
+Q_NOM_MW = 0.7   # MW/m^2  (held constant)
 
 # -- LOFA sweep parameters -----------------------------------------------------
 G_START  = 1500.0  # kg/(m^2*s)  initial mass flux

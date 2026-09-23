@@ -41,7 +41,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from water_properties import sat_props
-from models import biasi_chf, katto_chf, hewitt_chf, groeneveld_chf
+from models import biasi_chf, katto_chf, hewitt_chf, groeneveld_table_chf, groeneveld_regression_chf
 from main import _load_cases, _is_lofa, _is_pressurisation
 
 OUT_DIR = Path(__file__).resolve().parent

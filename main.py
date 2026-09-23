@@ -181,7 +181,7 @@ def _run_lofa(case, props):
                     q = r.q_chf
 
                 margin = q / q_nom if not np.isnan(q) else float('nan')
-                flag = " <-DRYOUT" if (not np.isnan(margin) and margin < 1.0) else "         "
+                flag = " DRYOUT" if (not np.isnan(margin) and margin < 1.0) else "         "
                 row += f"  {margin:>10.3f}{flag}" if not np.isnan(margin) else f"  {'N/A':>19}"
                 if not np.isnan(margin) and margin < 1.0 and dryout_G[name] is None:
                     dryout_G[name] = G

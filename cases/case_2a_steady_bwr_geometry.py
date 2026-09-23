@@ -28,7 +28,7 @@ L_M = 3.8        # m  --  heated length
 P_PA    = 7.0e6  # Pa
 G_KGM2S = 1500.0 # kg/(m^2*s)
 X_IN    = -0.041 # inlet quality
-Q_NOM_MW = 1.1   # MW/m^2  nominal heat flux
+Q_NOM_MW = 0.7   # MW/m^2  nominal heat flux
 
 # -- Models to run -------------------------------------------------------------
 RUN_BIASI      = True
