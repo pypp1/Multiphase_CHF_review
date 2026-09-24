@@ -207,7 +207,7 @@ def _run_pressurisation(case):
     print(f"\n  G = {case.G_KGM2S:.0f} kg/(m^2*s)  |  d = {case.D_M*1000:.0f} mm  "
           f"|  L = {case.L_M:.2f} m")
     print(f"  P:  {case.P_NOM_PA/1e6:.2f} -> {case.P_PEAK_PA/1e6:.2f} MPa")
-    print(f"  q'': {case.Q_NOM_MW:.2f} -> {case.Q_PEAK_MW:.2f} MW/m^2\n")
+    print(f"  q'' = {case.Q_NOM_MW:.2f} MW/m^2 (constant)\n")
 
     step_arr = np.linspace(0.0, 1.0, case.N_STEPS)
     dryout_step = {}
@@ -222,15 +222,15 @@ def _run_pressurisation(case):
         dryout_step[m] = None
 
     hdr_m = "  ".join(f"{m:>12}" for m in models)
-    print(f"  {'step':>6}  {'P [MPa]':>9}  {'q [MW/m^2]':>10}  {hdr_m}")
+    print(f"  {'step':>6}  {'P [MPa]':>9}  {hdr_m}")
     print(f"  {'-'*70}")
 
     for step in step_arr:
         P_step = case.P_NOM_PA  + step * (case.P_PEAK_PA  - case.P_NOM_PA)
-        q_step = (case.Q_NOM_MW + step * (case.Q_PEAK_MW  - case.Q_NOM_MW)) * 1e6
+        q_nom  = case.Q_NOM_MW * 1e6
         props_step = sat_props(P_step)
         dH_i    = max(0.0, -case.X_IN * props_step.H_fg)
-        row = f"  {step:6.3f}  {P_step/1e6:9.3f}  {q_step/1e6:10.4f}"
+        row = f"  {step:6.3f}  {P_step/1e6:9.3f}"
 
         for name in models:
             try:
@@ -258,7 +258,7 @@ def _run_pressurisation(case):
                                    props_step.eta_l, props_step.eta_v, x_in=case.X_IN)
                     q = r.q_chf
 
-                margin = q / q_step if not np.isnan(q) else float('nan')
+                margin = q / q_nom if not np.isnan(q) else float('nan')
                 flag = " DRYOUT" if (not np.isnan(margin) and margin < 1.0) else "         "
                 row += f"  {margin:>10.3f}{flag}" if not np.isnan(margin) else f"  {'N/A':>19}"
                 if not np.isnan(margin) and margin < 1.0 and dryout_step[name] is None:

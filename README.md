@@ -131,8 +131,15 @@ python validate_lut_regression.py
 
 It fits the pressure-regression curves, prints a per-pressure fit-error
 table (MAE, RMSE, Bias, MARD, RMSRE, P95) comparing the regression against
-the tabulated Appendix B data, and saves a check figure to
-`results/lut_regression_check.png`.
+the tabulated Appendix B data, and saves three check figures to `results/`:
+
+- `lut_regression_check.png` -- (a) G-X map of the MARD of each regression
+  curve over all tabulated pressures (discrete classes, no-fit cells
+  hatched); (b) box plot of the relative error at each pressure.
+- `lut_regression_operating_zone.png` -- the same map with the operating
+  points (G, X_CHF) of the active cases and the cells they interpolate from.
+- `lut_regression_slice_P7000_G1500.png` -- tabulated vs. regression CHF
+  and signed relative error along x at P = 7000 kPa, G = 1500 kg/(m^2*s).
 
 ## Known limitations
 

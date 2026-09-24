@@ -1,0 +1,6 @@
+model,case_1a_steady_lut_reference_qchf_MWm2,case_1a_steady_lut_reference_x_chf,case_1a_steady_lut_reference_margin,case_2a_steady_bwr_geometry_qchf_MWm2,case_2a_steady_bwr_geometry_x_chf,case_2a_steady_bwr_geometry_margin
+Katto (1978),0.699,0.547,0.999,0.961,0.547,1.373
+Biasi (1968),0.933,0.744,1.333,1.110,0.639,1.586
+Hewitt-Govan (1990),0.908,0.724,1.298,0.994,0.567,1.420
+LUT 2006 (table),0.744,0.585,1.063,,,
+LUT 2006 (regression),0.710,0.557,1.015,0.893,0.505,1.275

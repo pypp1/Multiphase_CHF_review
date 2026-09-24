@@ -38,6 +38,6 @@ G_STEP   = -50.0   # kg/(m^2*s)  step size (negative = decreasing)
 # -- Models to run -------------------------------------------------------------
 RUN_BIASI      = True
 RUN_KATTO      = True
-RUN_HEWITT     = False   # computationally expensive; disable for sweep
+RUN_HEWITT     = True
 RUN_GROENEVELD_TABLE      = True
 RUN_GROENEVELD_REGRESSION = True

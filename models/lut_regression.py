@@ -262,24 +262,106 @@ def compute_regression_errors(curves, G_axis, X_axis):
 # SECTION C -- Visualisation
 # -----------------------------------------------------------------------------
 
-_SAMPLE_GX_PAIRS = [
-    (500, 0.0),
-    (1500, 0.0),
-    (1500, 0.3),
-    (1500, 0.5),
-    (3000, 0.3),
-]
-_MARKERS = ['o', 's', '^', 'D', 'v']
+
+# Discrete MARD classes for the G-X error map [%]; values above the last
+# bound fall into the "over" class (> 50 %).
+_MARD_BOUNDS = [0.0, 5.0, 10.0, 20.0, 50.0]
+_MARD_COLORS = ['#ffffb2', '#fecc5c', '#fd8d3c', '#f03b20']
+_MARD_OVER = '#99000d'
+_NOFIT_COLOR = '#d9d9d9'
+_NOFIT_HATCH = '#8c8c8c'
 
 
-def plot_regression_curves(curves, G_axis, X_axis, save_path=None):
+def _mard_map(rel_errors):
+    """Mean absolute relative error over the pressure axis, per (G, X) cell [%]."""
+    import warnings as _warnings
+    with _warnings.catch_warnings():
+        _warnings.simplefilter("ignore", category=RuntimeWarning)
+        return np.nanmean(np.abs(rel_errors), axis=0)
+
+
+def _draw_error_map(ax, curves, rel_errors, G_axis, X_axis):
     """
-    Produce a compact two-panel figure:
-      1. Regression curves vs. raw data for a representative subset of
-         (G, X) pairs.
-      2. Box plot of the relative-error distribution at each tabulated
-         pressure.
+    Draw the per-cell MARD map on `ax` with equispaced (index-based)
+    cells, discrete colour classes and hatched no-fit cells. Returns the
+    QuadMesh so the caller can attach a colorbar.
+    """
+    from matplotlib.colors import BoundaryNorm, ListedColormap
+    from matplotlib.patches import Patch, Rectangle
 
+    n_G, n_X = len(G_axis), len(X_axis)
+    mard = _mard_map(rel_errors)
+    no_fit = np.array([[curves[i, j] is None for j in range(n_X)]
+                       for i in range(n_G)])
+    mard[no_fit] = np.nan
+
+    cmap = ListedColormap(_MARD_COLORS)
+    cmap.set_over(_MARD_OVER)
+    norm = BoundaryNorm(_MARD_BOUNDS, cmap.N)
+
+    x_edges = np.arange(n_X + 1) - 0.5
+    g_edges = np.arange(n_G + 1) - 0.5
+
+    mesh = ax.pcolormesh(
+        x_edges, g_edges, np.ma.masked_invalid(mard),
+        cmap=cmap, norm=norm, edgecolor='white', linewidth=0.3,
+    )
+
+    # No-fit cells: grey and hatched, so they are not read as zero error
+    for i_G, i_X in zip(*np.nonzero(no_fit)):
+        ax.add_patch(Rectangle(
+            (i_X - 0.5, i_G - 0.5), 1, 1, facecolor=_NOFIT_COLOR,
+            edgecolor=_NOFIT_HATCH, hatch='////', linewidth=0,
+        ))
+
+    ax.set_xticks(np.arange(n_X))
+    ax.set_xticklabels([f"{x:g}" for x in X_axis], rotation=90, fontsize=5)
+    ax.set_yticks(np.arange(n_G))
+    ax.set_yticklabels([f"{g:g}" for g in G_axis], fontsize=5)
+    ax.set_xlabel("Quality x [-]", fontsize=8)
+    ax.set_ylabel("G [kg/(m^2 s)]", fontsize=8)
+    ax.tick_params(length=1.5, pad=1)
+    ax.set_xlim(x_edges[0], x_edges[-1])
+    ax.set_ylim(g_edges[0], g_edges[-1])
+    ax.set_aspect('equal')
+
+    ax.legend(
+        handles=[Patch(facecolor=_NOFIT_COLOR, hatch='////',
+                       edgecolor=_NOFIT_HATCH, linewidth=0, label='no fit')],
+        fontsize=5.5, frameon=False, loc='lower left',
+        bbox_to_anchor=(0.0, 1.0), borderaxespad=0.2, handlelength=1.2,
+    )
+    return mesh
+
+
+def _add_mard_colorbar(fig, ax, mesh):
+    cbar = fig.colorbar(mesh, ax=ax, extend='max', spacing='uniform',
+                        fraction=0.046, pad=0.03)
+    cbar.set_ticks(_MARD_BOUNDS)
+    cbar.ax.tick_params(labelsize=6, length=1.5)
+    cbar.set_label("MARD over P [%]", fontsize=7)
+    return cbar
+
+
+def _save_or_show(fig, save_path):
+    import matplotlib.pyplot as plt
+    if save_path is not None:
+        fig.savefig(save_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+def plot_regression_error_map(curves, errors, G_axis, X_axis, save_path=None):
+    """
+    Two-panel diagnostic figure:
+      (a) G-X map of the mean absolute relative deviation of each
+          regression curve from the table, averaged over all tabulated
+          pressures (one cell = one fitted polynomial);
+      (b) box plot of the relative-error distribution at each tabulated
+          pressure.
+
+    `errors` is the dict returned by `compute_regression_errors()`.
     If `save_path` is given the figure is saved there (PNG, 150 DPI);
     otherwise it is shown interactively.
     """
@@ -287,49 +369,20 @@ def plot_regression_curves(curves, G_axis, X_axis, save_path=None):
 
     G_axis = np.asarray(G_axis)
     X_axis = np.asarray(X_axis)
+    rel_errors = errors['rel_errors']
 
-    fig, (ax_curves, ax_box) = plt.subplots(
-        2, 1, figsize=(3.15, 5.2), dpi=150
+    fig, (ax_map, ax_box) = plt.subplots(
+        2, 1, figsize=(3.4, 5.6), dpi=150,
+        gridspec_kw=dict(height_ratios=[1.2, 1.0]),
     )
 
-    # --- Panel 1: regression curves with raw data -------------------------
-    P_dense = np.linspace(_P_AXIS_RAW.min(), _P_AXIS_RAW.max(), 200)
-    colors = plt.cm.viridis(np.linspace(0.05, 0.85, len(_SAMPLE_GX_PAIRS)))
+    # --- Panel (a): per-cell MARD map --------------------------------------
+    mesh = _draw_error_map(ax_map, curves, rel_errors, G_axis, X_axis)
+    _add_mard_colorbar(fig, ax_map, mesh)
+    ax_map.set_title("(a)", fontsize=8, loc='right')
 
-    for (G_val, X_val), marker, color in zip(_SAMPLE_GX_PAIRS, _MARKERS, colors):
-        i_G = int(np.argmin(np.abs(G_axis - G_val)))
-        i_X = int(np.argmin(np.abs(X_axis - X_val)))
-
-        raw = _CHF_RAW[:, i_G, i_X]
-        valid = raw > 0
-        label = f"G={G_axis[i_G]:.0f}, x={X_axis[i_X]:.2f}"
-
-        ax_curves.plot(
-            _P_AXIS_RAW[valid], raw[valid],
-            marker, color=color, markersize=3.5, linestyle='none', label=label,
-        )
-
-        curve = curves[i_G, i_X]
-        if curve is not None:
-            chf_dense = np.clip(curve(P_dense), 0.0, None)
-            ax_curves.plot(P_dense, chf_dense, '-', color=color, linewidth=1.0)
-
-    ax_curves.set_xlabel("Pressure [kPa]", fontsize=8)
-    ax_curves.set_ylabel("CHF [kW/m^2]", fontsize=8)
-    ax_curves.tick_params(labelsize=7)
-    ax_curves.legend(fontsize=5.5, frameon=False, loc='best')
-    ax_curves.spines['top'].set_visible(False)
-    ax_curves.spines['right'].set_visible(False)
-
-    # --- Panel 2: relative-error box plot per pressure slice ---------------
-    box_data = []
-    for i_P in range(len(_P_AXIS_RAW)):
-        chf_reg = evaluate_lut_regression(_P_AXIS_RAW[i_P], curves, G_axis, X_axis)
-        chf_table = _CHF_RAW[i_P]
-        valid = chf_table > 0
-        rel_err = (chf_reg[valid] - chf_table[valid]) / chf_table[valid] * 100.0
-        box_data.append(rel_err)
-
+    # --- Panel (b): relative-error box plot per pressure slice -------------
+    box_data = [r[~np.isnan(r)] for r in rel_errors.reshape(len(_P_AXIS_RAW), -1)]
     positions = np.arange(len(_P_AXIS_RAW))
     ax_box.boxplot(
         box_data, positions=positions, widths=0.6,
@@ -350,11 +403,110 @@ def plot_regression_curves(curves, G_axis, X_axis, save_path=None):
     ax_box.tick_params(labelsize=7)
     ax_box.spines['top'].set_visible(False)
     ax_box.spines['right'].set_visible(False)
+    ax_box.set_title("(b)", fontsize=8, loc='right')
 
     fig.tight_layout()
+    _save_or_show(fig, save_path)
 
-    if save_path is not None:
-        fig.savefig(save_path, dpi=150)
-        plt.close(fig)
-    else:
-        plt.show()
+
+def plot_operating_zone_map(curves, errors, G_axis, X_axis, points, save_path=None):
+    """
+    Same G-X MARD map as panel (a) of `plot_regression_error_map()`, with
+    the operating envelope of the analysed cases overlaid.
+
+    `points` is an iterable of (G, X_CHF) pairs actually reached by the
+    cases. The rectangle encloses every tabulated cell whose regression
+    curve enters the bilinear interpolation at those points; the points
+    themselves are drawn as small markers.
+    """
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Rectangle
+
+    G_axis = np.asarray(G_axis)
+    X_axis = np.asarray(X_axis)
+    pts = np.asarray(list(points), dtype=float)
+
+    fig, ax = plt.subplots(figsize=(3.4, 3.6), dpi=150)
+    mesh = _draw_error_map(ax, curves, errors['rel_errors'], G_axis, X_axis)
+    _add_mard_colorbar(fig, ax, mesh)
+
+    # Continuous (G, X) -> fractional cell index on the equispaced grid
+    g_idx = np.interp(pts[:, 0], G_axis, np.arange(len(G_axis)))
+    x_idx = np.interp(pts[:, 1], X_axis, np.arange(len(X_axis)))
+
+    g_lo, g_hi = np.floor(g_idx.min()), np.ceil(g_idx.max())
+    x_lo, x_hi = np.floor(x_idx.min()), np.ceil(x_idx.max())
+    ax.add_patch(Rectangle(
+        (x_lo - 0.5, g_lo - 0.5), x_hi - x_lo + 1, g_hi - g_lo + 1,
+        fill=False, edgecolor='black', linewidth=1.2, zorder=3,
+    ))
+    ax.plot(x_idx, g_idx, 'o', markerfacecolor='white', markeredgecolor='black',
+            markeredgewidth=0.4, markersize=2.2, linestyle='none', zorder=4,
+            label='case points')
+
+    fig.tight_layout()
+    _save_or_show(fig, save_path)
+
+
+def plot_regression_quality_slice(curves, G_axis, X_axis, P_kPa, G,
+                                  x_range=None, save_path=None):
+    """
+    CHF and signed relative error along the quality axis at a fixed
+    tabulated pressure and mass flux:
+      (a) tabulated CHF vs. regression CHF;
+      (b) signed relative error (regression - table) / table.
+
+    `x_range` = (x_min, x_max), if given, is shaded as the quality range
+    reached by the analysed cases at this (P, G).
+    """
+    import matplotlib.pyplot as plt
+
+    G_axis = np.asarray(G_axis)
+    X_axis = np.asarray(X_axis)
+    i_P = int(np.argmin(np.abs(_P_AXIS_RAW - P_kPa)))
+    i_G = int(np.argmin(np.abs(G_axis - G)))
+    if _P_AXIS_RAW[i_P] != P_kPa or G_axis[i_G] != G:
+        raise ValueError(f"P = {P_kPa} kPa and G = {G} must be tabulated values.")
+
+    chf_table = _CHF_RAW[i_P, i_G, :].astype(float)
+    chf_reg = evaluate_lut_regression(P_kPa, curves, G_axis, X_axis)[i_G, :]
+    valid = chf_table > 0
+    rel_err = np.full(len(X_axis), np.nan)
+    rel_err[valid] = (chf_reg[valid] - chf_table[valid]) / chf_table[valid] * 100.0
+
+    fig, (ax_chf, ax_err) = plt.subplots(
+        2, 1, figsize=(3.15, 4.4), dpi=150, sharex=True,
+        gridspec_kw=dict(height_ratios=[1.3, 1.0]),
+    )
+
+    for ax in (ax_chf, ax_err):
+        if x_range is not None:
+            ax.axvspan(*x_range, color='#bdbdbd', alpha=0.45, linewidth=0,
+                       label='cases' if ax is ax_chf else None)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.tick_params(labelsize=7)
+
+    # --- Panel (a): CHF along x --------------------------------------------
+    ax_chf.plot(X_axis[valid], chf_table[valid], 'o', color='#333333',
+                markersize=3.5, linestyle='none', label='table')
+    ax_chf.plot(X_axis, chf_reg, '-s', color='#2c7fb8', markersize=2.5,
+                linewidth=1.0, label='regression')
+    ax_chf.set_ylabel("CHF [kW/m^2]", fontsize=8)
+    ax_chf.legend(fontsize=6, frameon=False, loc='best')
+    ax_chf.set_title(f"P = {P_kPa:.0f} kPa, G = {G:.0f} kg/(m^2 s)",
+                     fontsize=7)
+
+    # --- Panel (b): signed relative error ----------------------------------
+    widths = np.diff(X_axis).min() * 0.7
+    colors = np.where(rel_err >= 0, '#d7301f', '#2c7fb8')
+    ax_err.bar(X_axis[valid], rel_err[valid], width=widths,
+               color=colors[valid], edgecolor='none')
+    ax_err.axhline(0.0, color='black', linewidth=0.7)
+    ax_err.axhline(5.0, color='gray', linewidth=0.6, linestyle='--')
+    ax_err.axhline(-5.0, color='gray', linewidth=0.6, linestyle='--')
+    ax_err.set_xlabel("Quality x [-]", fontsize=8)
+    ax_err.set_ylabel("Relative error [%]", fontsize=8)
+
+    fig.tight_layout()
+    _save_or_show(fig, save_path)

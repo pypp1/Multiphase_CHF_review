@@ -2,7 +2,7 @@
 cases/case_4a_pressurisation.py
 ================================
 Case 4a -- Pressurisation transient: d = 8 mm
-P rises 7 -> 8.5 MPa; heat flux rises 100 -> 150 % of nominal.
+P rises 7 -> 8.5 MPa; heat flux held constant at nominal.
 
 Flag
 ----
@@ -17,7 +17,7 @@ ACTIVE = True
 NAME        = "Case 4a -- Pressurisation transient (d = 8 mm)"
 DESCRIPTION = (
     "Quasi-static pressurisation event.  A dimensionless transient parameter "
-    "t in [0, 1] drives P from P_NOM to P_PEAK and heat flux from Q_NOM to Q_PEAK.  "
+    "t in [0, 1] drives P from P_NOM to P_PEAK at constant heat flux Q_NOM.  "
     "Dryout onset is the first step where CHF margin < 1."
 )
 
@@ -32,8 +32,7 @@ X_IN     = -0.041
 # -- Pressurisation sweep parameters ------------------------------------------
 P_NOM_PA   = 7.0e6  # Pa  initial pressure
 P_PEAK_PA  = 8.5e6  # Pa  peak pressure
-Q_NOM_MW   = 0.7    # MW/m^2  nominal heat flux
-Q_PEAK_MW  = 1.1   # MW/m^2  peak heat flux (150 % nominal)
+Q_NOM_MW   = 0.7    # MW/m^2  heat flux (constant during transient)
 N_STEPS    = 30     # number of quasi-static steps
 
 # -- Models to run -------------------------------------------------------------
