@@ -105,12 +105,10 @@ def biasi_chf(
 
     # -- Unit conversions: SI -> CGS --------------------------------------------
     P_ata = P_Pa / (9.81e4)          # 1 ata ~ 98 100 Pa
-    G_cgs = G * 1e-4 / 1e-3         # kg/(m^2*s) -> g/(cm^2*s) = 0.1*G_SI
     # Actually: 1 kg/(m^2*s) = 1e-4 kg/(cm^2*s) = 0.1 g/(cm^2*s)
     G_cgs = G * 0.1                  # g/(cm^2*s)
     d_cm  = d * 100.0                # m -> cm
     L_cm  = L * 100.0                # m -> cm
-    H_fg_cgs = H_fg * 1e-3          # J/kg -> kJ/kg   (Biasi uses kJ/kg... not needed directly)
     H_fg_Jg  = H_fg / 1000.0        # J/g (for CGS heat balance)
 
     # -- Biasi pressure functions ----------------------------------------------
