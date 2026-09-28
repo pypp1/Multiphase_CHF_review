@@ -61,9 +61,9 @@ def _detect_regime(rho_ratio: float, l_over_d: float, We_inv: float,
     """
     C_LH = 0.29 if fluid.lower() == 'freon' else 0.40
 
-    # L/H boundary (eq. 16)
-    rhs_LH = C_LH * (rho_ratio**0.133) * (We_inv**-0.29) - 0.0031
-    if l_over_d > rhs_LH:
+   # L/H boundary (eq. 16)
+    den_LH = C_LH * (rho_ratio**0.133) * (We_inv**0.29) - 0.0031
+    if den_LH <= 0.0 or l_over_d > 1.0 / den_LH:
         return 'L'
 
     # H/HP boundary (eq. 19)
@@ -75,7 +75,7 @@ def _detect_regime(rho_ratio: float, l_over_d: float, We_inv: float,
 
     # H/N boundary (eq. 18)
     rhs_HN = 0.77 / (We_inv**0.37)
-    if l_over_d > rhs_HN:
+    if l_over_d < rhs_HN:
         return 'N'
 
     return 'H'
@@ -89,7 +89,7 @@ def _qc0(regime: str, G: float, H_fg: float,
         C = 0.34 if fluid.lower() == 'freon' else 0.25
         return C * G * H_fg * (We_inv**0.043) / l_over_d
     if regime == 'H':
-        return (G * H_fg * 0.10 * (rho_ratio**0.133) * (We_inv**1.3)
+        return (G * H_fg * 0.10 * (rho_ratio**0.133) * (We_inv**(1.0/3.0))
                 / (1.0 + 0.0031 * l_over_d))
     if regime == 'N':
         return (G * H_fg * 0.098 * (rho_ratio**0.133) * (We_inv**0.433)
